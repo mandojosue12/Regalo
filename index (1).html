@@ -1,0 +1,405 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿De cuántos sabe de @tedelimalimon? 🍋💖</title>
+    <style>
+        body {
+            background: linear-gradient(180deg, #ffe6f0, #ffc1cc);
+            font-family: 'Comic Sans MS', 'Arial', sans-serif;
+            color: #ff69b4;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        h1 {
+            font-size: 2.5em;
+            text-shadow: 2px 2px #fff;
+            margin-bottom: 10px;
+        }
+        h1::before { content: "🍋"; }
+        h1::after { content: "💖"; }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff0f5;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.3);
+        }
+        .question-box {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .question-box.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+        }
+        .question {
+            font-size: 1.3em;
+            background: #ffb6c1;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .option {
+            background: #ff8c94;
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .option:hover {
+            transform: scale(1.05);
+            background: #ff69b4;
+        }
+        .feedback {
+            font-size: 1em;
+            color: #c71585;
+            margin: 10px 0;
+            display: none;
+        }
+        .feedback a {
+            color: #ff1493;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .feedback a:hover {
+            text-decoration: underline;
+        }
+        .result {
+            font-size: 1.5em;
+            background: #ffb6c1;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            animation: sparkle 2s infinite;
+        }
+        @keyframes sparkle {
+            0% { box-shadow: 0 0 10px #ff69b4; }
+            50% { box-shadow: 0 0 20px #ff1493; }
+            100% { box-shadow: 0 0 10px #ff69b4; }
+        }
+        .heart {
+            display: inline-block;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        button#restart {
+            background: #ff69b4;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+        button#restart:hover {
+            background: #ff3e8d;
+        }
+        @media (max-width: 500px) {
+            h1 { font-size: 2em; }
+            .container { padding: 10px; }
+            .question { font-size: 1.1em; }
+            .option { font-size: 0.9em; }
+            .result { font-size: 1.3em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>¿De cuántos sabe de @tedelimalimon?</h1>
+        <p>¡Elige la respuesta correcta y gana corazoncitos por la reina del limón! <span class="heart">💞</span></p>
+        <div id="quiz">
+            <div class="question-box" data-id="1">
+                <div class="question">¿Qué planea hacer @tedelimalimon después de Navidad? 🎄</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(1, 0)">Decorar su cuarto con luces nuevas</button>
+                    <button class="option" onclick="checkAnswer(1, 1)">Bajar de peso</button>
+                    <button class="option" onclick="checkAnswer(1, 0)">Comprar regalos para Año Nuevo</button>
+                </div>
+                <div class="feedback" id="feedback1">
+                    ¡Súper! Quiere bajar de peso ⚖️ Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1872664673436524744" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback1-wrong" style="display: none;">
+                    Uy, no es esa 😿 ¡Quiere bajar de peso! Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1872664673436524744" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="2">
+                <div class="question">¿Cómo se describe @tedelimalimon en este tuit? 🌟</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(2, 0)">Una morena bailando salsa</button>
+                    <button class="option" onclick="checkAnswer(2, 0)">Una pelirroja comiendo helado</button>
+                    <button class="option" onclick="checkAnswer(2, 1)">Una rubia sirviendo cunt</button>
+                </div>
+                <div class="feedback" id="feedback2">
+                    ¡Correcto! Se describe como una rubia sirviendo cunt 💁‍♀️ Checa el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1919912207783022609" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback2-wrong" style="display: none;">
+                    Nope, ¡es una rubia sirviendo cunt! 💁‍♀️ Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1919912207783022609" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="3">
+                <div class="question">¿Por qué se sintió incómoda @tedelimalimon? 😳</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(3, 1)">Porque los demás supieron algo que le gusta</button>
+                    <button class="option" onclick="checkAnswer(3, 0)">Porque olvidó su tarea en casa</button>
+                    <button class="option" onclick="checkAnswer(3, 0)">Porque llegó tarde a una fiesta</button>
+                </div>
+                <div class="feedback" id="feedback3">
+                    ¡Bien! Fue porque los demás supieron algo que le gusta 🤫 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1919501261029663006" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback3-wrong" style="display: none;">
+                    Ay, no es esa 😿 ¡Fue porque los demás supieron algo que le gusta! Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1919501261029663006" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="4">
+                <div class="question">¿Por qué fue @tedelimalimon a buscar el celular de su abuela? 📱</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(4, 0)">Para jugar con el celular</button>
+                    <button class="option" onclick="checkAnswer(4, 1)">Para poder salir</button>
+                    <button class="option" onclick="checkAnswer(4, 0)">Para tomar fotos con su abuela</button>
+                </div>
+                <div class="feedback" id="feedback4">
+                    ¡Genial! Fue para poder salir 🚪 Checa el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1869043546940113101" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback4-wrong" style="display: none;">
+                    Nope, ¡fue para poder salir! 🚪 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1869043546940113101" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="5">
+                <div class="question">¿Qué decidió hacer @tedelimalimon junto con su mamá? 🍽️</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(5, 0)">Ir de compras al centro comercial</button>
+                    <button class="option" onclick="checkAnswer(5, 0)">Preparar cupcakes de limón</button>
+                    <button class="option" onclick="checkAnswer(5, 1)">Hacer ayuno intermitente</button>
+                </div>
+                <div class="feedback" id="feedback5">
+                    ¡Perfecto! Decidió hacer ayuno intermitente 🕒 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1869722985491574940" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback5-wrong" style="display: none;">
+                    Uy, no es esa 😿 ¡Decidió hacer ayuno intermitente! Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1869722985491574940" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="6">
+                <div class="question">¿Por qué se sintió mal @tedelimalimon? 😢</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(6, 1)">Porque su amiga no quería juntarse en el verano</button>
+                    <button class="option" onclick="checkAnswer(6, 0)">Porque perdió su libro favorito</button>
+                    <button class="option" onclick="checkAnswer(6, 0)">Porque no le gustó su helado</button>
+                </div>
+                <div class="feedback" id="feedback6">
+                    ¡Súper! Fue porque su amiga no quería juntarse en el verano 🌞 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1869483771634032749" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback6-wrong" style="display: none;">
+                    Uy, no es esa 😿 ¡Fue porque su amiga no quería juntarse en el verano! Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1869483771634032749" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="7">
+                <div class="question">¿Qué le gustó a @tedelimalimon de abril? 📅</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(7, 0)">Sol, playa y relajación</button>
+                    <button class="option" onclick="checkAnswer(7, 1)">Chisme, adrenalina y tensión</button>
+                    <button class="option" onclick="checkAnswer(7, 0)">Compras, dulces y películas</button>
+                </div>
+                <div class="feedback" id="feedback7">
+                    ¡Correcto! Le gustó el chisme, la adrenalina y la tensión 🎉 Checa el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1916520750552338475" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback7-wrong" style="display: none;">
+                    Nope, ¡fue el chisme, la adrenalina y la tensión! 🎉 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1916520750552338475" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="8">
+                <div class="question">¿Cuál es la motivación de @tedelimalimon para bajar de peso? ⚖️</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(8, 0)">Comer más dulces</button>
+                    <button class="option" onclick="checkAnswer(8, 0)">Usar ropa nueva</button>
+                    <button class="option" onclick="checkAnswer(8, 1)">Gustarle a un chabón</button>
+                </div>
+                <div class="feedback" id="feedback8">
+                    ¡Bien! Su motivación es gustarle a un chabón 💘 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1917963026151444757" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback8-wrong" style="display: none;">
+                    Ay, no es esa 😿 ¡Su motivación es gustarle a un chabón! Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1917963026151444757" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="9">
+                <div class="question">¿Cuál es el nombre de @tedelimalimon? 🌸</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(9, 1)">Monserrat</button>
+                    <button class="option" onclick="checkAnswer(9, 0)">Valentina</button>
+                    <button class="option" onclick="checkAnswer(9, 0)">Sofía</button>
+                </div>
+                <div class="feedback" id="feedback9">
+                    ¡Genial! Su nombre es Monserrat 🌟 Checa el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1857548171871756573" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback9-wrong" style="display: none;">
+                    Nope, ¡su nombre es Monserrat! 🌟 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1857548171871756573" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="10">
+                <div class="question">¿Qué edad cumplió @tedelimalimon? 🎂</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(10, 0)">15 años</button>
+                    <button class="option" onclick="checkAnswer(10, 1)">17 años</button>
+                    <button class="option" onclick="checkAnswer(10, 0)">19 años</button>
+                </div>
+                <div class="feedback" id="feedback10">
+                    ¡Perfecto! Cumplió 17 años 🎈 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1922094989355470935" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback10-wrong" style="display: none;">
+                    Uy, no es esa 😿 ¡Cumplió 17 años! Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1922094989355470935" target="_blank">Ver tuit</a>
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="11">
+                <div class="question">¿Cuánto quiere Mando a Monserrat? 🍋</div>
+                <div class="options">
+                    <button class="option" onclick="checkAnswer(11, 0)">Nada</button>
+                    <button class="option" onclick="checkAnswer(11, 0)">La odia</button>
+                    <button class="option" onclick="checkAnswer(11, 1)">Mucho Mucho</button>
+                </div>
+                <div class="feedback" id="feedback11">
+                    ¡Súper! Mando quiere mucho mucho a Monserrat 💖 Mira el tuit: 
+                    <a href="https://x.com/tedelimalimon/status/1872695540896690200" target="_blank">Ver tuit</a>
+                </div>
+                <div class="feedback" id="feedback11-wrong" style="display: none;">
+                    Uy, no es esa 😿 ¡Mando quiere mucho mucho a Monserrat! 
+
+                </div>
+            </div>
+            <div class="question-box hidden" data-id="12">
+                <div class="result" id="result">
+                    ¡Terminaste el quiz kawaii! Tu puntuación: <span id="score">0</span>/11 corazoncitos 💖
+                    <div id="comment"></div>
+                </div>
+                <button id="restart" onclick="restartQuiz()">¡Volver a intentarlo! ✨</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let currentQuestion = 1;
+        const totalQuestions = 11;
+        let score = 0;
+
+        function checkAnswer(questionId, isCorrect) {
+            const feedback = document.getElementById(`feedback${questionId}`);
+            const feedbackWrong = document.getElementById(`feedback${questionId}-wrong`);
+            feedback.style.display = isCorrect ? 'block' : 'none';
+            feedbackWrong.style.display = isCorrect ? 'none' : 'block';
+            
+            if (isCorrect) score++;
+
+            setTimeout(() => {
+                document.querySelector(`.question-box[data-id="${questionId}"]`).classList.add('hidden');
+                if (questionId <= totalQuestions) {
+                    document.querySelector(`.question-box[data-id="${questionId + 1}"]`).classList.remove('hidden');
+                }
+                currentQuestion++;
+                
+                if (questionId === totalQuestions) {
+                    const scoreDisplay = document.getElementById('score');
+                    const commentDisplay = document.getElementById('comment');
+                    scoreDisplay.textContent = score;
+                    if (score === 11) {
+                        commentDisplay.textContent = '¡Eres la reina del limón! 🍋💕 @tedelimalimon está orgullosísima';
+                    } else if (score >= 8) {
+                        commentDisplay.textContent = '¡Súper bien! 😺 Eres casi limonada rosa perfecta';
+                    } else if (score >= 4) {
+                        commentDisplay.textContent = '¡Buen intento! 🌟 Sigue brillando con @tedelimalimon';
+                    } else {
+                        commentDisplay.textContent = 'Ay, no te preocupes 😿 ¡Intenta otra vez y sé una estrella!';
+                    }
+                }
+            }, 2000);
+        }
+
+        function restartQuiz() {
+            document.querySelectorAll('.question-box').forEach(box => {
+                box.classList.add('hidden');
+                box.querySelectorAll('.feedback').forEach(fb => fb.style.display = 'none');
+            });
+            document.querySelector('.question-box[data-id="1"]').classList.remove('hidden');
+            currentQuestion = 1;
+            score = 0;
+        }
+    </script>
+</body>
+</html>
